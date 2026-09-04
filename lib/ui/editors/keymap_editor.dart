@@ -180,18 +180,21 @@ class KeymapEditor extends BasicEditor {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(top: 4, right: 6),
-                        child: Text('Layer'),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 7, right: 10),
+                        child: Text(
+                          'Layer',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
                       ),
                       Expanded(
                         child: Wrap(
-                          spacing: 2,
-                          runSpacing: 2,
+                          spacing: 4,
+                          runSpacing: 4,
                           children: [
                             for (var x = 0; x < (k?.layers ?? 0); x++)
                               SquareButton(
@@ -204,24 +207,29 @@ class KeymapEditor extends BasicEditor {
                           ],
                         ),
                       ),
-                      Column(
-                        children: [
-                          SquareButton(
-                            text: '+',
-                            onPressed: () => adjustSize(false),
-                          ),
-                          const SizedBox(height: 2),
-                          SquareButton(
-                            text: '-',
-                            onPressed: () => adjustSize(true),
-                          ),
-                        ],
+                      const SizedBox(width: 12),
+                      SquareButton(
+                        text: '-',
+                        relSize: 1.667,
+                        tooltip: 'Zoom out',
+                        onPressed: () => adjustSize(true),
+                      ),
+                      const SizedBox(width: 4),
+                      SquareButton(
+                        text: '+',
+                        relSize: 1.667,
+                        tooltip: 'Zoom in',
+                        onPressed: () => adjustSize(false),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     child: Center(child: KeyboardWidget(controller: kb)),
                   ),
                 ),

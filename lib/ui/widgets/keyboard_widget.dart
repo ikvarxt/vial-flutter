@@ -469,6 +469,7 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
   String? _tooltip;
   DateTime? _lastTap;
   KeyModel? _lastTapKey;
+  KeyModel? _hoverKey;
 
   @override
   void initState() {
@@ -520,8 +521,12 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
     final (key, _) = widget.controller.hitTest(ev.localPosition);
     final tip = key?.tooltip;
     final show = tip != null && tip.isNotEmpty;
-    if (show != (_tooltip != null) || (show && tip != _tooltip)) {
+    final hoverChanged = key != _hoverKey;
+    if (hoverChanged ||
+        show != (_tooltip != null) ||
+        (show && tip != _tooltip)) {
       setState(() {
+        _hoverKey = key;
         _tooltip = show ? tip : null;
         _hover = ev.localPosition;
       });
@@ -544,15 +549,16 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
         onPointerDown: _onPointerDown,
         child: MouseRegion(
           onHover: _onHover,
-          onExit: (_) => setState(() => _tooltip = null),
+          onExit: (_) => setState(() {
+            _tooltip = null;
+            _hoverKey = null;
+          }),
           child: CustomPaint(
             size: Size(c.width, c.height),
             painter: _KeyboardPainter(
               controller: c,
               palette: palette,
-              maskLightFactor: VialTheme.maskLightFactor(
-                VialTheme.instance.theme,
-              ),
+              hoverKey: c.enabled ? _hoverKey : null,
             ),
           ),
         ),
@@ -570,19 +576,29 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
               left: _hover!.dx + 12,
               top: _hover!.dy + 16,
               child: IgnorePointer(
-                child: Material(
-                  elevation: 4,
-                  color: palette.toolTipBase,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: palette.toolTipBase,
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.18),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
+                      horizontal: 8,
+                      vertical: 5,
                     ),
                     child: Text(
                       _tooltip!,
                       style: TextStyle(
                         color: palette.toolTipText,
                         fontSize: 12,
+                        fontFamily: monoFontFamily,
                       ),
                     ),
                   ),
@@ -599,12 +615,12 @@ class _KeyboardPainter extends CustomPainter {
   _KeyboardPainter({
     required this.controller,
     required this.palette,
-    required this.maskLightFactor,
+    required this.hoverKey,
   });
 
   final KeyboardWidgetController controller;
   final VialPalette palette;
-  final int maskLightFactor;
+  final KeyModel? hoverKey;
 
   static const double _fontSize = 12;
 
@@ -619,7 +635,13 @@ class _KeyboardPainter extends CustomPainter {
     final tp = TextPainter(
       text: TextSpan(
         text: text,
-        style: TextStyle(color: color, fontSize: fontSize, height: 1.1),
+        style: TextStyle(
+          color: color,
+          fontSize: fontSize,
+          height: 1.1,
+          fontFamily: uiFontFamily,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
@@ -638,20 +660,21 @@ class _KeyboardPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final regularColor = palette.buttonText;
-    final background = Paint()..color = palette.button;
-    final foreground = Paint()..color = lighter(palette.button, 120);
-    final mask = Paint()..color = lighter(palette.button, maskLightFactor);
-    final activePen = Paint()
-      ..color = palette.highlight
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    final extra = Paint()..color = palette.buttonText;
-    final backgroundPressed = Paint()..color = palette.highlight;
-    final foregroundPressed = Paint()..color = lighter(palette.highlight, 120);
-    final backgroundOn = Paint()..color = darker(palette.highlight, 150);
-    final foregroundOn = Paint()..color = darker(palette.highlight, 120);
+    final p = palette;
+    final accentSide = Color.lerp(p.accent, Colors.black, 0.28)!;
+    final onTop = Color.lerp(p.keyTop, p.accent, p.isDark ? 0.45 : 0.35)!;
+    final onSide = Color.lerp(p.keySide, accentSide, 0.4)!;
+    final hoverTop = Color.lerp(p.keyTop, p.ink, 0.05)!;
     final maskFontSize = (_fontSize * 0.8).roundToDouble();
+
+    final side = Paint();
+    final top = Paint();
+    final mask = Paint();
+    final ring = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = p.accent;
+    final extra = Paint();
 
     for (final key in controller.widgets) {
       canvas.save();
@@ -663,45 +686,55 @@ class _KeyboardPainter extends CustomPainter {
 
       final active =
           key.active || (controller.activeKey == key && !controller.activeMask);
+      final maskActive = controller.activeKey == key && controller.activeMask;
+      final hovered = hoverKey == key && !key.pressed;
+      final emphasised = key.pressed || (active && !key.masked);
 
-      var brush = background;
-      if (key.pressed) {
-        brush = backgroundPressed;
+      // Keycap body: soft drop shadow, darker side wall, lighter top face.
+      canvas.drawShadow(key.backgroundDrawPath, p.keyShadow, 1.6, false);
+      if (emphasised) {
+        side.color = accentSide;
+        top.color = p.accent;
       } else if (key.on) {
-        brush = backgroundOn;
+        side.color = onSide;
+        top.color = onTop;
+      } else {
+        side.color = p.keySide;
+        top.color = hovered ? hoverTop : p.keyTop;
       }
-      canvas.drawPath(key.backgroundDrawPath, brush);
-      if (active) canvas.drawPath(key.backgroundDrawPath, activePen);
+      canvas.drawPath(key.backgroundDrawPath, side);
+      canvas.drawPath(key.foregroundDrawPath, top);
+      if (active && key.masked) {
+        canvas.drawPath(key.backgroundDrawPath, ring);
+      }
 
-      brush = foreground;
-      if (key.pressed) {
-        brush = foregroundPressed;
-      } else if (key.on) {
-        brush = foregroundOn;
-      }
-      canvas.drawPath(key.foregroundDrawPath, brush);
+      final legend = emphasised ? p.onAccent : p.keyLegend;
+      final link = emphasised ? p.onAccent : p.link;
+      extra.color = legend;
 
       if (key.masked) {
         _drawText(
           canvas,
           key.nonmaskRect,
           key.text,
-          key.colorOverride ? palette.link : regularColor,
+          key.colorOverride ? link : legend,
           maskFontSize,
         );
         final rr = RRect.fromRectAndRadius(
           key.maskRect,
           Radius.circular(key.corner),
         );
+        mask.color = maskActive ? p.accent : p.keyMask;
         canvas.drawRRect(rr, mask);
-        if (controller.activeKey == key && controller.activeMask) {
-          canvas.drawRRect(rr, activePen);
-        }
         _drawText(
           canvas,
           key.maskRect,
           key.maskText,
-          key.maskColorOverride ? palette.link : regularColor,
+          maskActive
+              ? p.onAccent
+              : key.maskColorOverride
+              ? link
+              : legend,
           maskFontSize,
         );
       } else {
@@ -709,7 +742,7 @@ class _KeyboardPainter extends CustomPainter {
           canvas,
           key.textRect,
           key.text,
-          key.colorOverride ? palette.link : regularColor,
+          key.colorOverride ? link : legend,
           _fontSize,
         );
       }

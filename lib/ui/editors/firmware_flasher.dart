@@ -9,6 +9,7 @@ import '../autorefresh.dart';
 import '../dialogs/unlocker_dialog.dart';
 import '../file_io.dart';
 import 'basic_editor.dart';
+import '../theme.dart';
 
 const int _chunk = 64;
 
@@ -299,7 +300,7 @@ class FirmwareFlasher extends BasicEditor {
                   alignment: Alignment.topLeft,
                   child: SelectableText(
                     _log.join('\n'),
-                    style: const TextStyle(fontFamily: 'monospace'),
+                    style: const TextStyle(fontFamily: monoFontFamily),
                   ),
                 ),
               ),

@@ -14,6 +14,7 @@ import '../widgets/spin_box.dart';
 import '../widgets/tab_strip.dart';
 import '../widgets/tabbed_keycodes.dart';
 import 'basic_editor.dart';
+import '../theme.dart';
 
 /// One macro action row: UI state for a [BasicAction].
 class _ActionUi {
@@ -402,10 +403,12 @@ class MacroRecorder extends BasicEditor {
             children: [
               Text(
                 'Memory used by macros: $memory/${k.macroMemory}',
-                style: overflow ? const TextStyle(color: Colors.red) : null,
+                style: overflow
+                    ? TextStyle(color: context.palette.brightText)
+                    : null,
               ),
               const Spacer(),
-              OutlinedButton(
+              FilledButton(
                 onPressed: canSave ? _onSave : null,
                 child: const Text('Save'),
               ),

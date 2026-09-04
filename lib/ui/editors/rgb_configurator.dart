@@ -350,7 +350,7 @@ class RgbConfigurator extends BasicEditor {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              OutlinedButton(
+              FilledButton(
                 onPressed: () => _run(k.saveRgb),
                 child: const Text('Save'),
               ),

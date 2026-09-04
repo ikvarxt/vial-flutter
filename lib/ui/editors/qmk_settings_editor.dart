@@ -192,7 +192,7 @@ class QmkSettingsEditor extends BasicEditor {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              OutlinedButton(
+              FilledButton(
                 onPressed: _anyModified ? _onSave : null,
                 child: const Text('Save'),
               ),

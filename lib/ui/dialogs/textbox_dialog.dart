@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../file_io.dart';
+import '../theme.dart';
 
 /// Multi-line text editor dialog with copy/paste and Ctrl+O / Ctrl+S
 /// import/export. Returns the text on Apply, null on Cancel.
@@ -138,7 +139,7 @@ class _TextboxDialogState extends State<_TextboxDialog> {
                       expands: true,
                       textAlignVertical: TextAlignVertical.top,
                       style: const TextStyle(
-                        fontFamily: 'monospace',
+                        fontFamily: monoFontFamily,
                         fontSize: 13,
                       ),
                     ),

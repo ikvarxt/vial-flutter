@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme.dart';
+
 /// Integer entry with ▲/▼ steppers, standing in for `QSpinBox`.
 class SpinBox extends StatefulWidget {
   const SpinBox({
@@ -77,13 +79,12 @@ class _SpinBoxState extends State<SpinBox> {
               enabled: widget.enabled,
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              textAlign: TextAlign.right,
               decoration: const InputDecoration(
-                isDense: true,
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: 6,
+                  horizontal: 8,
                   vertical: 6,
                 ),
-                border: OutlineInputBorder(),
               ),
               onSubmitted: _commit,
             ),
@@ -115,9 +116,19 @@ class _Stepper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.palette;
     return InkWell(
       onTap: onTap,
-      child: SizedBox(width: 18, height: 14, child: Icon(icon, size: 16)),
+      borderRadius: BorderRadius.circular(3),
+      child: SizedBox(
+        width: 20,
+        height: 15,
+        child: Icon(
+          icon,
+          size: 16,
+          color: onTap == null ? p.disabledText : p.muted,
+        ),
+      ),
     );
   }
 }

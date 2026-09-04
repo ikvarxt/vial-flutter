@@ -31,6 +31,7 @@ import 'file_io.dart';
 import 'keycode_display.dart';
 import 'platform/platform_support.dart';
 import 'theme.dart';
+import 'widgets/tab_strip.dart';
 import 'widgets/tabbed_keycodes.dart';
 
 const String vialVersion = '0.7.5';
@@ -345,11 +346,119 @@ class _MainWindowState extends State<MainWindow> {
 
   // ---- UI ------------------------------------------------------------------
 
-  SingleActivator _shortcut(LogicalKeyboardKey key) {
-    final mac = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-    return SingleActivator(key, meta: mac, control: !mac);
+  bool get _isMac => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+  SingleActivator _shortcut(LogicalKeyboardKey key) =>
+      SingleActivator(key, meta: _isMac, control: !_isMac);
+
+  static String _check(bool on, String label) => '${on ? '✓' : '   '} $label';
+
+  /// Native macOS menu bar; the in-window bar is only used elsewhere.
+  List<PlatformMenu> _buildPlatformMenus() {
+    final isVial = currentDevice is VialKeyboard;
+    final locked = UiLock.instance.locked;
+    final keymap = AppSettings.instance.keymap;
+    final theme = VialTheme.instance.theme;
+    return [
+      PlatformMenu(
+        label: 'Vial',
+        menus: [
+          PlatformMenuItem(label: 'About Vial', onSelected: _aboutVial),
+          if (isVial)
+            PlatformMenuItem(
+              label: 'About ${currentDevice!.title}',
+              onSelected: _aboutKeyboard,
+            ),
+          const PlatformMenuItemGroup(
+            members: [
+              PlatformProvidedMenuItem(type: PlatformProvidedMenuItemType.quit),
+            ],
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'File',
+        menus: [
+          PlatformMenuItem(
+            label: 'Load Saved Layout…',
+            shortcut: _shortcut(LogicalKeyboardKey.keyO),
+            onSelected: locked ? null : _onLayoutLoad,
+          ),
+          PlatformMenuItem(
+            label: 'Save Current Layout…',
+            shortcut: _shortcut(LogicalKeyboardKey.keyS),
+            onSelected: locked ? null : _onLayoutSave,
+          ),
+          PlatformMenuItemGroup(
+            members: [
+              PlatformMenuItem(
+                label: 'Sideload VIA JSON…',
+                onSelected: locked ? null : _onSideloadJson,
+              ),
+              PlatformMenuItem(
+                label: 'Download VIA Definitions',
+                onSelected: locked ? null : _onDownloadViaStack,
+              ),
+              PlatformMenuItem(
+                label: 'Load Dummy JSON…',
+                onSelected: locked ? null : _onLoadDummy,
+              ),
+            ],
+          ),
+        ],
+      ),
+      PlatformMenu(
+        label: 'Keyboard Layout',
+        menus: [
+          for (final (name, _) in keymapTables)
+            PlatformMenuItem(
+              label: _check(name == keymap, name),
+              onSelected: () => _changeKeyboardLayout(name),
+            ),
+        ],
+      ),
+      if (isVial)
+        PlatformMenu(
+          label: 'Security',
+          menus: [
+            PlatformMenuItem(
+              label: 'Unlock',
+              shortcut: _shortcut(LogicalKeyboardKey.keyU),
+              onSelected: locked ? null : _unlock,
+            ),
+            PlatformMenuItem(
+              label: 'Lock',
+              shortcut: _shortcut(LogicalKeyboardKey.keyL),
+              onSelected: locked ? null : _lock,
+            ),
+            PlatformMenuItemGroup(
+              members: [
+                PlatformMenuItem(
+                  label: 'Reboot to Bootloader',
+                  shortcut: _shortcut(LogicalKeyboardKey.keyB),
+                  onSelected: locked ? null : _rebootToBootloader,
+                ),
+              ],
+            ),
+          ],
+        ),
+      PlatformMenu(
+        label: 'Theme',
+        menus: [
+          for (final name in ['System', ...themes.map((t) => t.$1)])
+            PlatformMenuItem(
+              label: _check(name == theme, name),
+              onSelected: () => _setTheme(name),
+            ),
+        ],
+      ),
+    ];
   }
 
+  Widget _radio(bool on) =>
+      Icon(on ? Icons.radio_button_checked : Icons.radio_button_off, size: 15);
+
+  /// In-window menu bar for the web and non-macOS desktops.
   Widget _buildMenuBar() {
     final isVial = currentDevice is VialKeyboard;
     final locked = UiLock.instance.locked;
@@ -399,12 +508,7 @@ class _MainWindowState extends State<MainWindow> {
             for (final (name, _) in keymapTables)
               MenuItemButton(
                 onPressed: () => _changeKeyboardLayout(name),
-                leadingIcon: Icon(
-                  name == keymap
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  size: 16,
-                ),
+                leadingIcon: _radio(name == keymap),
                 child: Text(name),
               ),
           ],
@@ -437,12 +541,7 @@ class _MainWindowState extends State<MainWindow> {
             for (final name in ['System', ...themes.map((t) => t.$1)])
               MenuItemButton(
                 onPressed: () => _setTheme(name),
-                leadingIcon: Icon(
-                  name == theme
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off,
-                  size: 16,
-                ),
+                leadingIcon: _radio(name == theme),
                 child: Text(name),
               ),
           ],
@@ -466,96 +565,151 @@ class _MainWindowState extends State<MainWindow> {
     );
   }
 
-  Widget _buildDeviceRow() {
+  Widget _buildDevicePicker(VialPalette p) {
     final locked = UiLock.instance.locked;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+    final hasSelection =
+        _selectedDevice >= 0 && _selectedDevice < _devices.length;
+    final selected = hasSelection ? _devices[_selectedDevice] : null;
+    final textTheme = Theme.of(context).textTheme;
+    return MenuAnchor(
+      builder: (ctx, controller, _) => _BarChip(
+        enabled: !locked && _devices.isNotEmpty,
+        onTap: () => controller.isOpen ? controller.close() : controller.open(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _DeviceDot(device: selected, palette: p),
+            const SizedBox(width: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 320),
+              child: Text(
+                selected?.title ?? 'No keyboard',
+                overflow: TextOverflow.ellipsis,
+                style: textTheme.labelLarge!.copyWith(
+                  color: selected == null ? p.muted : p.ink,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.expand_more, size: 16, color: p.muted),
+          ],
+        ),
+      ),
+      menuChildren: [
+        for (var i = 0; i < _devices.length; i++)
+          MenuItemButton(
+            onPressed: () => onDeviceSelected(i),
+            leadingIcon: _DeviceDot(device: _devices[i], palette: p),
+            trailingIcon: i == _selectedDevice
+                ? Icon(Icons.check, size: 15, color: p.ink)
+                : const SizedBox(width: 15),
+            child: Text(_devices[i].title),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTopBar() {
+    final p = context.palette;
+    final locked = UiLock.instance.locked;
+    final textTheme = Theme.of(context).textTheme;
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: p.bar,
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
       child: Row(
         children: [
-          Expanded(
-            child: DropdownButton<int>(
-              isExpanded: true,
-              value: _selectedDevice >= 0 && _selectedDevice < _devices.length
-                  ? _selectedDevice
-                  : null,
-              items: [
-                for (var i = 0; i < _devices.length; i++)
-                  DropdownMenuItem(
-                    value: i,
-                    child: Text(
-                      _devices[i].title,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-              ],
-              onChanged: locked
-                  ? null
-                  : (v) {
-                      if (v != null) onDeviceSelected(v);
-                    },
-            ),
-          ),
+          const _BrandMark(),
           const SizedBox(width: 8),
-          if (autorefresh.pollsAutomatically)
-            OutlinedButton(
+          Text('Vial', style: textTheme.titleSmall),
+          const SizedBox(width: 16),
+          Container(width: 1, height: 18, color: p.hairline),
+          const SizedBox(width: 16),
+          _buildDevicePicker(p),
+          const SizedBox(width: 6),
+          if (_busy)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8),
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (autorefresh.pollsAutomatically)
+            IconButton(
+              tooltip: 'Refresh',
               onPressed: locked ? null : onClickRefresh,
-              child: const Text('Refresh'),
+              icon: const Icon(Icons.refresh),
             )
           else
-            OutlinedButton(
+            FilledButton.icon(
               onPressed: locked ? null : _onConnect,
-              child: const Text('Connect device'),
+              icon: const Icon(Icons.usb, size: 16),
+              label: const Text('Connect device'),
             ),
+          const Spacer(),
+          if (!_isMac) _buildMenuBar(),
         ],
       ),
     );
   }
 
   Widget _buildNoDevices() {
-    final hint = autorefresh.pollsAutomatically
-        ? 'No devices detected. Connect a Vial-compatible device and press '
-              '"Refresh"\nor select "File" → "Download VIA definitions" in '
-              'order to enable support for VIA keyboards.'
-        : 'No devices detected. Connect a Vial-compatible device and press '
-              '"Connect device".';
-    return Center(child: Text(hint, textAlign: TextAlign.center));
+    final p = context.palette;
+    final textTheme = Theme.of(context).textTheme;
+    final locked = UiLock.instance.locked;
+    final polls = autorefresh.pollsAutomatically;
+    final hint = polls
+        ? 'Plug in a Vial-compatible keyboard and refresh. VIA-only '
+              'keyboards need File › Download VIA definitions first.'
+        : 'Plug in a Vial-compatible keyboard, then let Chrome open it.';
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 380),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.keyboard_outlined, size: 40, color: p.muted),
+            const SizedBox(height: 16),
+            Text('No keyboard detected', style: textTheme.titleMedium),
+            const SizedBox(height: 6),
+            Text(hint, textAlign: TextAlign.center, style: textTheme.bodySmall),
+            const SizedBox(height: 20),
+            if (polls)
+              OutlinedButton.icon(
+                onPressed: locked ? null : onClickRefresh,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh'),
+              )
+            else
+              FilledButton.icon(
+                onPressed: locked ? null : _onConnect,
+                icon: const Icon(Icons.usb, size: 16),
+                label: const Text('Connect device'),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildTabStrip() {
     final p = context.palette;
-    final locked = UiLock.instance.locked;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final e in _tabs)
-            InkWell(
-              onTap: locked ? null : () => _switchTab(e),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: e == _current ? p.highlight : Colors.transparent,
-                      width: 2,
-                    ),
-                  ),
-                ),
-                child: Text(
-                  e.label,
-                  style: TextStyle(
-                    color: locked ? p.disabledText : p.windowText,
-                    fontWeight: e == _current
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                ),
-              ),
-            ),
-        ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: p.hairline)),
+      ),
+      child: TabStrip(
+        labels: [for (final e in _tabs) e.label],
+        current: _current == null ? -1 : _tabs.indexOf(_current!),
+        enabled: !UiLock.instance.locked,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        onSelected: (i) => _switchTab(_tabs[i]),
       ),
     );
   }
@@ -574,18 +728,16 @@ class _MainWindowState extends State<MainWindow> {
   @override
   Widget build(BuildContext context) {
     final cur = _current;
-    return Scaffold(
+    Widget body = Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) => Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildMenuBar(),
-            _buildDeviceRow(),
+            _buildTopBar(),
             if (_devices.isEmpty)
               Expanded(child: _buildNoDevices())
             else ...[
               _buildTabStrip(),
-              const Divider(height: 1),
               Expanded(
                 child: cur == null
                     ? const SizedBox.shrink()
@@ -596,6 +748,123 @@ class _MainWindowState extends State<MainWindow> {
               height: keycodePickerHeight(constraints.maxHeight),
             ),
           ],
+        ),
+      ),
+    );
+    if (_isMac) {
+      body = PlatformMenuBar(menus: _buildPlatformMenus(), child: body);
+    }
+    return body;
+  }
+}
+
+/// Miniature keycap used as the app mark in the top bar.
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return SizedBox(
+      width: 20,
+      height: 20,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Color.lerp(p.accent, Colors.black, 0.28),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: p.accent,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Center(
+              child: Text(
+                'V',
+                style: TextStyle(
+                  color: p.onAccent,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  height: 1,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Status dot next to a device name: accent for a live keyboard, muted for
+/// dummies and bootloaders, hollow when nothing is selected.
+class _DeviceDot extends StatelessWidget {
+  const _DeviceDot({required this.device, required this.palette});
+
+  final VialDevice? device;
+  final VialPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = device;
+    final live = d is VialKeyboard && d is! VialDummyKeyboard;
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: d == null
+            ? Colors.transparent
+            : live
+            ? palette.accent
+            : palette.muted,
+        border: d == null ? Border.all(color: palette.muted, width: 1.5) : null,
+      ),
+    );
+  }
+}
+
+/// Quiet outlined chip used for top-bar pickers.
+class _BarChip extends StatefulWidget {
+  const _BarChip({
+    required this.child,
+    required this.onTap,
+    this.enabled = true,
+  });
+
+  final Widget child;
+  final VoidCallback onTap;
+  final bool enabled;
+
+  @override
+  State<_BarChip> createState() => _BarChipState();
+}
+
+class _BarChipState extends State<_BarChip> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return MouseRegion(
+      cursor: widget.enabled ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.enabled ? widget.onTap : null,
+        child: Container(
+          height: 30,
+          padding: const EdgeInsets.fromLTRB(10, 0, 8, 0),
+          decoration: BoxDecoration(
+            color: _hover && widget.enabled
+                ? Color.alphaBlend(p.hover, p.base)
+                : p.base,
+            borderRadius: BorderRadius.circular(VialRadius.control),
+            border: Border.all(color: p.hairline),
+          ),
+          child: widget.child,
         ),
       ),
     );

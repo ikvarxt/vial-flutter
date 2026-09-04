@@ -8,6 +8,7 @@ import '../widgets/key_widget.dart';
 import '../widgets/spin_box.dart';
 import '../widgets/tab_strip.dart';
 import 'basic_editor.dart';
+import '../theme.dart';
 
 class _TapDanceUi {
   _TapDanceUi(VoidCallback onKey) {
@@ -183,7 +184,7 @@ class TapDance extends BasicEditor {
                         const TextSpan(text: 'Use '),
                         TextSpan(
                           text: 'TD($_current)',
-                          style: const TextStyle(fontFamily: 'monospace'),
+                          style: const TextStyle(fontFamily: monoFontFamily),
                         ),
                         const TextSpan(
                           text: ' to set up this action in the keymap.',
@@ -201,7 +202,7 @@ class TapDance extends BasicEditor {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              OutlinedButton(
+              FilledButton(
                 onPressed: _anyModified ? _onSave : null,
                 child: const Text('Save'),
               ),

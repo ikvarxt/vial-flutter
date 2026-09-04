@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../hid/vial_device.dart';
 import '../../protocol/constants.dart';
 import '../../protocol/keyboard.dart';
+import '../theme.dart';
 
 String _hex(int v, int width) =>
     v.toRadixString(16).toUpperCase().padLeft(width, '0');
@@ -89,7 +90,7 @@ Future<void> showAboutKeyboardDialog(
         child: SingleChildScrollView(
           child: SelectableText(
             aboutKeyboardText(device),
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+            style: const TextStyle(fontFamily: monoFontFamily, fontSize: 12.5),
           ),
         ),
       ),

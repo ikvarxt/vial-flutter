@@ -7,6 +7,7 @@ import '../display_keyboard_defs.dart';
 import '../keycode_display.dart';
 import 'display_keyboard.dart';
 import 'square_button.dart';
+import '../theme.dart';
 
 typedef KeycodeFilter = bool Function(String qmkId);
 
@@ -239,7 +240,7 @@ class _FilteredTabbedKeycodesState extends State<FilteredTabbedKeycodes>
           controller: _tabController,
           isScrollable: true,
           labelPadding: const EdgeInsets.symmetric(horizontal: 12),
-          tabs: [for (final t in _tabs) Tab(height: 32, text: t.def.label)],
+          tabs: [for (final t in _tabs) Tab(height: 36, text: t.def.label)],
         ),
         Expanded(
           child: TabBarView(
@@ -367,12 +368,19 @@ class TabbedKeycodes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final masked = filter == keycodeFilterMasked;
-    return FilteredTabbedKeycodes(
-      key: ValueKey(masked),
-      filter: masked ? keycodeFilterMasked : keycodeFilterAny,
-      onKeycodeChanged: onKeycodeChanged,
-      onAnykey: onAnykey,
-      generation: generation,
+    final p = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.tray,
+        border: Border(top: BorderSide(color: p.hairline)),
+      ),
+      child: FilteredTabbedKeycodes(
+        key: ValueKey(masked),
+        filter: masked ? keycodeFilterMasked : keycodeFilterAny,
+        onKeycodeChanged: onKeycodeChanged,
+        onAnykey: onAnykey,
+        generation: generation,
+      ),
     );
   }
 }

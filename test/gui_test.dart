@@ -372,7 +372,7 @@ int spinBoxValue(WidgetTester tester) =>
 
 bool saveEnabled(WidgetTester tester) =>
     tester
-        .widget<OutlinedButton>(find.widgetWithText(OutlinedButton, 'Save'))
+        .widget<FilledButton>(find.widgetWithText(FilledButton, 'Save'))
         .onPressed !=
     null;
 
@@ -603,7 +603,7 @@ void main() {
     // Commit the change.
     await enterSpinBox(tester, 123);
     expect(stripLabel('2*'), findsOneWidget);
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Save'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Save'));
     await tester.pumpAndSettle();
     expect(stripLabel('2*'), findsNothing);
     expect(vk.tapDance[2], [4, 0x106, 0, 0, 123]);
