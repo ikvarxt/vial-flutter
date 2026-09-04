@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 
 import '../../kle/kle_serial.dart';
@@ -497,7 +498,7 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
   void _onPointerDown(PointerDownEvent ev) {
     final c = widget.controller;
     if (!c.enabled) return;
-    final now = DateTime.now();
+    final now = clock.now();
     final (key, _) = c.hitTest(ev.localPosition);
     final isDouble =
         key != null &&

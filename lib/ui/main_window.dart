@@ -91,6 +91,7 @@ class _MainWindowState extends State<MainWindow> {
   void dispose() {
     UiLock.instance.removeListener(_onLockChanged);
     autorefresh.onDevicesUpdated = null;
+    autorefresh.stop();
     super.dispose();
   }
 
@@ -574,22 +575,28 @@ class _MainWindowState extends State<MainWindow> {
   Widget build(BuildContext context) {
     final cur = _current;
     return Scaffold(
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildMenuBar(),
-          _buildDeviceRow(),
-          if (_devices.isEmpty)
-            Expanded(child: _buildNoDevices())
-          else ...[
-            _buildTabStrip(),
-            const Divider(height: 1),
-            Expanded(
-              child: cur == null ? const SizedBox.shrink() : _buildEditor(cur),
+      body: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildMenuBar(),
+            _buildDeviceRow(),
+            if (_devices.isEmpty)
+              Expanded(child: _buildNoDevices())
+            else ...[
+              _buildTabStrip(),
+              const Divider(height: 1),
+              Expanded(
+                child: cur == null
+                    ? const SizedBox.shrink()
+                    : _buildEditor(cur),
+              ),
+            ],
+            KeycodeTrayWidget(
+              height: keycodePickerHeight(constraints.maxHeight),
             ),
           ],
-          const KeycodeTrayWidget(),
-        ],
+        ),
       ),
     );
   }

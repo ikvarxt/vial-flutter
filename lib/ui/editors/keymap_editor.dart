@@ -173,70 +173,72 @@ class KeymapEditor extends BasicEditor {
   @override
   Widget build(BuildContext context) {
     final k = keyboard;
-    return Column(
-      children: [
-        Expanded(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 4, right: 6),
-                      child: Text('Layer'),
-                    ),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 2,
-                        runSpacing: 2,
+    return LayoutBuilder(
+      builder: (context, constraints) => Column(
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4, right: 6),
+                        child: Text('Layer'),
+                      ),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 2,
+                          runSpacing: 2,
+                          children: [
+                            for (var x = 0; x < (k?.layers ?? 0); x++)
+                              SquareButton(
+                                text: '$x',
+                                relSize: 1.667,
+                                checked: x == currentLayer,
+                                enabled: x != currentLayer,
+                                onPressed: () => switchLayer(x),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Column(
                         children: [
-                          for (var x = 0; x < (k?.layers ?? 0); x++)
-                            SquareButton(
-                              text: '$x',
-                              relSize: 1.667,
-                              checked: x == currentLayer,
-                              enabled: x != currentLayer,
-                              onPressed: () => switchLayer(x),
-                            ),
+                          SquareButton(
+                            text: '+',
+                            onPressed: () => adjustSize(false),
+                          ),
+                          const SizedBox(height: 2),
+                          SquareButton(
+                            text: '-',
+                            onPressed: () => adjustSize(true),
+                          ),
                         ],
                       ),
-                    ),
-                    Column(
-                      children: [
-                        SquareButton(
-                          text: '+',
-                          onPressed: () => adjustSize(false),
-                        ),
-                        const SizedBox(height: 2),
-                        SquareButton(
-                          text: '-',
-                          onPressed: () => adjustSize(true),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Center(child: KeyboardWidget(controller: kb)),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Center(child: KeyboardWidget(controller: kb)),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 260,
-          child: TabbedKeycodes(
-            filter: _filter,
-            onKeycodeChanged: onKeycodeChanged,
-            onAnykey: onAnyKeycode,
-            generation: _generation,
+          SizedBox(
+            height: keycodePickerHeight(constraints.maxHeight),
+            child: TabbedKeycodes(
+              filter: _filter,
+              onKeycodeChanged: onKeycodeChanged,
+              onAnykey: onAnyKeycode,
+              generation: _generation,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

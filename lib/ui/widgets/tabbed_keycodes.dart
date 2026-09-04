@@ -254,13 +254,30 @@ class _FilteredTabbedKeycodesState extends State<FilteredTabbedKeycodes>
   }
 }
 
-class _KeycodeTab extends StatelessWidget {
+class _KeycodeTab extends StatefulWidget {
   const _KeycodeTab({required this.tab, required this.onKeycode});
 
   final _VisibleTab tab;
   final void Function(String) onKeycode;
 
+  @override
+  State<_KeycodeTab> createState() => _KeycodeTabState();
+}
+
+class _KeycodeTabState extends State<_KeycodeTab> {
   static const double _scrollbarWidth = 14;
+
+  final _controller = ScrollController();
+
+  _VisibleTab get tab => widget.tab;
+
+  void Function(String) get onKeycode => widget.onKeycode;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -279,12 +296,11 @@ class _KeycodeTab extends StatelessWidget {
         if (chosen < 0) return const SizedBox.shrink();
         final alt = tab.def.alternatives[chosen];
         final buttons = tab.buttons[chosen];
-        final controller = ScrollController();
         return Scrollbar(
-          controller: controller,
+          controller: _controller,
           thumbVisibility: true,
           child: SingleChildScrollView(
-            controller: controller,
+            controller: _controller,
             padding: const EdgeInsets.fromLTRB(4, 6, _scrollbarWidth, 6),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -362,10 +378,17 @@ class TabbedKeycodes extends StatelessWidget {
 }
 
 /// The bottom tray driven by [KeycodeTray.instance].
+/// Height of the keycode picker under an editor: a fixed share of the window
+/// so a maximised desktop window shows the whole display keyboard without
+/// scrolling, but never so tall that it squeezes out the keymap itself.
+double keycodePickerHeight(double available) =>
+    (available * 0.45).clamp(260.0, 460.0);
+
 class KeycodeTrayWidget extends StatefulWidget {
-  const KeycodeTrayWidget({super.key, this.generation = 0});
+  const KeycodeTrayWidget({super.key, this.generation = 0, this.height = 260});
 
   final int generation;
+  final double height;
 
   @override
   State<KeycodeTrayWidget> createState() => _KeycodeTrayWidgetState();
@@ -393,7 +416,7 @@ class _KeycodeTrayWidgetState extends State<KeycodeTrayWidget> {
     final tray = KeycodeTray.instance;
     if (!tray.visible) return const SizedBox.shrink();
     return SizedBox(
-      height: 260,
+      height: widget.height,
       child: TabbedKeycodes(
         filter: tray.filter,
         onKeycodeChanged: tray.onKeycodeChanged,

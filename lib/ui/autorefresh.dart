@@ -19,7 +19,8 @@ class Autorefresh {
 
   static final Autorefresh instance = Autorefresh._();
 
-  final HidBackend backend = createHidBackend();
+  /// Replaceable so tests can plug in a virtual keyboard.
+  HidBackend backend = createHidBackend();
 
   List<VialDevice> devices = [];
   VialDevice? currentDevice;
@@ -39,6 +40,11 @@ class Autorefresh {
   void start() {
     if (!pollsAutomatically || _timer != null) return;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => update());
+  }
+
+  void stop() {
+    _timer?.cancel();
+    _timer = null;
   }
 
   void lock() => _locked = true;
