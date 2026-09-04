@@ -142,6 +142,12 @@ class _NoBackend implements HidBackend {
   const _NoBackend();
 
   @override
+  bool get needsUserGesture => false;
+
+  @override
+  bool get exposesSerialNumber => true;
+
+  @override
   Future<List<HidDeviceInfo>> enumerate() async => const [];
 
   @override
@@ -170,7 +176,8 @@ Future<List<VialDevice>> findVialDevices(
       if (isRawHid(dev)) {
         filtered.add(VialKeyboard(dev, backend, sideload: true));
       }
-    } else if (serial.contains(vialSerialNumberMagic)) {
+    } else if (serial.contains(vialSerialNumberMagic) ||
+        (!backend.exposesSerialNumber && isRawHid(dev))) {
       if (isRawHid(dev)) filtered.add(VialKeyboard(dev, backend));
     } else if (serial.contains(viblSerialNumberMagic)) {
       filtered.add(VialBootloader(dev, backend));

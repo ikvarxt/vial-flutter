@@ -48,6 +48,14 @@ abstract class HidDevice {
 }
 
 abstract class HidBackend {
+  /// WebHID only hands out devices after a picker shown from a click, so the
+  /// UI must route "Refresh" through [requestDevices] on such backends.
+  bool get needsUserGesture => false;
+
+  /// WebHID hides serial numbers, so Vial's serial-magic detection cannot
+  /// run there and every raw-HID device has to be treated as a keyboard.
+  bool get exposesSerialNumber => true;
+
   Future<List<HidDeviceInfo>> enumerate();
 
   Future<HidDevice> open(HidDeviceInfo info);
