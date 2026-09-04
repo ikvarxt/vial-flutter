@@ -113,6 +113,17 @@ class _MainWindowState extends State<MainWindow> {
     }
     autorefresh.start();
     await onClickRefresh();
+    await _loadStartupDummy();
+  }
+
+  /// Development aid: `--dart-define=VIAL_DUMMY_JSON=/path/to/via.json` loads a
+  /// dummy keyboard without going through the file picker.
+  Future<void> _loadStartupDummy() async {
+    const path = String.fromEnvironment('VIAL_DUMMY_JSON');
+    if (path.isEmpty) return;
+    final data = await readLocalFile(path);
+    if (data == null) return;
+    await _guard(() => autorefresh.loadDummy(data));
   }
 
   void _onLockChanged() {
@@ -353,20 +364,21 @@ class _MainWindowState extends State<MainWindow> {
               shortcut: _shortcut(LogicalKeyboardKey.keyS),
               child: const Text('Save current layout...'),
             ),
-            if (!kIsWeb) ...[
-              const Divider(),
-              MenuItemButton(
-                onPressed: locked ? null : _onSideloadJson,
-                child: const Text('Sideload VIA JSON...'),
-              ),
+            const Divider(),
+            MenuItemButton(
+              onPressed: locked ? null : _onSideloadJson,
+              child: const Text('Sideload VIA JSON...'),
+            ),
+            if (!kIsWeb)
               MenuItemButton(
                 onPressed: locked ? null : _onDownloadViaStack,
                 child: const Text('Download VIA definitions'),
               ),
-              MenuItemButton(
-                onPressed: locked ? null : _onLoadDummy,
-                child: const Text('Load dummy JSON...'),
-              ),
+            MenuItemButton(
+              onPressed: locked ? null : _onLoadDummy,
+              child: const Text('Load dummy JSON...'),
+            ),
+            if (!kIsWeb) ...[
               const Divider(),
               MenuItemButton(
                 onPressed: exitApp,

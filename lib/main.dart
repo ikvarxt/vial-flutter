@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'debug/ui_probe.dart';
 import 'protocol/keyboard.dart';
 import 'settings/qmk_settings.dart';
 import 'ui/app_globals.dart';
@@ -39,6 +40,7 @@ Future<void> main() async {
     return true;
   };
 
+  UiProbe.register();
   runZonedGuarded(() => runApp(const VialApp()), _reportError);
 }
 
@@ -56,6 +58,7 @@ class VialApp extends StatelessWidget {
         theme: VialTheme.instance.themeData(Brightness.light),
         darkTheme: VialTheme.instance.themeData(Brightness.dark),
         home: const MainWindow(),
+        builder: (context, child) => UiProbe.wrap(child!),
       ),
     );
   }

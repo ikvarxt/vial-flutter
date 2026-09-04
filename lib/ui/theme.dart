@@ -372,11 +372,13 @@ class VialTheme extends ChangeNotifier {
       surfaceContainerHighest: p.alternateBase,
       outline: p.disabledText,
     );
-    final textTheme = ThemeData(brightness: brightness).textTheme.apply(
-      bodyColor: p.text,
-      displayColor: p.text,
-      fontSizeFactor: 0.93,
-    );
+    final typography = Typography.material2021();
+    final colored = brightness == Brightness.dark
+        ? typography.white
+        : typography.black;
+    final textTheme = Typography.englishLike2021
+        .merge(colored)
+        .apply(bodyColor: p.text, displayColor: p.text, fontSizeFactor: 0.93);
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,

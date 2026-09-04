@@ -150,7 +150,7 @@ class RgbConfigurator extends BasicEditor {
             onChanged: (v) => onChanged(v.round()),
           ),
         ),
-        SizedBox(width: 40, child: Text('$value')),
+        SizedBox(width: 40, child: Text('${value.clamp(0, safeMax)}')),
       ],
     );
   }

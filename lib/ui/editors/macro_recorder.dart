@@ -380,16 +380,16 @@ class MacroRecorder extends BasicEditor {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Row(
             children: [
-              TextButton(
+              OutlinedButton(
                 onPressed: () => _onTextWindow(context, tab),
                 child: const Text('Open Text Editor...'),
               ),
               const Spacer(),
-              TextButton(
+              OutlinedButton(
                 onPressed: () => _addAction(tab, ActionText()),
                 child: const Text('Add action'),
               ),
-              TextButton(
+              OutlinedButton(
                 onPressed: () => _addAction(tab, ActionTap(['KC_ENTER'])),
                 child: const Text('Tap Enter'),
               ),

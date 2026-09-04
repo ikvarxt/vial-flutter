@@ -6,3 +6,5 @@ Future<String> downloadViaStack() async =>
     throw UnsupportedError('not available on the web');
 
 void exitApp() {}
+
+Future<String?> readLocalFile(String path) async => null;

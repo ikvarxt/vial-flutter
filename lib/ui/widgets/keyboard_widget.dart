@@ -533,18 +533,25 @@ class _KeyboardWidgetState extends State<KeyboardWidget> {
   Widget build(BuildContext context) {
     final c = widget.controller;
     final palette = context.palette;
-    final canvas = Listener(
-      onPointerDown: _onPointerDown,
-      child: MouseRegion(
-        onHover: _onHover,
-        onExit: (_) => setState(() => _tooltip = null),
-        child: CustomPaint(
-          size: Size(c.width, c.height),
-          painter: _KeyboardPainter(
-            controller: c,
-            palette: palette,
-            maskLightFactor: VialTheme.maskLightFactor(
-              VialTheme.instance.theme,
+    // The no-op tap recognizer claims taps on the canvas so the editor's
+    // container-level "click outside to deselect" handler does not fire for
+    // clicks that already landed on a key.
+    final canvas = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {},
+      child: Listener(
+        onPointerDown: _onPointerDown,
+        child: MouseRegion(
+          onHover: _onHover,
+          onExit: (_) => setState(() => _tooltip = null),
+          child: CustomPaint(
+            size: Size(c.width, c.height),
+            painter: _KeyboardPainter(
+              controller: c,
+              palette: palette,
+              maskLightFactor: VialTheme.maskLightFactor(
+                VialTheme.instance.theme,
+              ),
             ),
           ),
         ),

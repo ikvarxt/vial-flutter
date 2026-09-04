@@ -6,3 +6,5 @@ Future<String> downloadViaStack() async =>
     throw UnsupportedError('not available on this platform');
 
 void exitApp() {}
+
+Future<String?> readLocalFile(String path) async => null;

@@ -39,3 +39,8 @@ Future<String> downloadViaStack() async {
 }
 
 void exitApp() => exit(0);
+
+Future<String?> readLocalFile(String path) async {
+  final f = File(path);
+  return f.existsSync() ? f.readAsString() : null;
+}
