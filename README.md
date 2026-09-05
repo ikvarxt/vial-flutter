@@ -28,6 +28,10 @@ as a web app in Chrome (WebHID).
   `com.apple.security.device.usb` is already set)
 - Chrome / Edge (any browser with WebHID) for the web target; WebHID only works
   in a secure context, so serve over `https://` or from `localhost`
+- Linux: the usual Flutter desktop toolchain (`clang cmake ninja-build
+  pkg-config libgtk-3-dev`) plus `zenity` for the file dialogs. HID access
+  reads `/dev/hidraw*` directly (no libhidapi needed), so the device nodes must
+  be accessible to your user, see below
 
 ## Running
 
@@ -43,6 +47,22 @@ Chrome:
 flutter run -d chrome
 ```
 
+Linux:
+
+```bash
+flutter run -d linux
+```
+
+Keyboards are found through sysfs/hidraw, the same path vial-gui uses. Without
+a udev rule only root can open the nodes; install the bundled rule once:
+
+```bash
+sudo cp linux/udev/99-vial.rules /etc/udev/rules.d/
+sudo udevadm control --reload && sudo udevadm trigger
+```
+
+then re-plug the keyboard.
+
 The web build needs a user gesture before the browser exposes devices: click
 **Connect device** in the toolbar and pick the keyboard in the browser's
 WebHID chooser. On macOS devices are polled automatically.
@@ -55,6 +75,15 @@ without hardware:
 ```bash
 flutter run -d macos --dart-define=VIAL_DUMMY_JSON=$PWD/test/fixtures/dummy_60.json
 ```
+
+On desktop the same name also works as an environment variable, so a prebuilt
+binary can be started against a dummy too:
+
+```bash
+VIAL_DUMMY_JSON=$PWD/test/fixtures/dummy_60.json build/linux/x64/debug/bundle/vial_flutter
+```
+
+Alternatively use **File > Load Dummy JSON…** at any time.
 
 On the web, pass a same-origin URL with the `dummy` query parameter, e.g.
 `http://localhost:8080/?dummy=dummy_60.json` after copying the JSON next to
@@ -78,7 +107,7 @@ report no issues).
 
 | Path | Contents |
 |---|---|
-| `lib/hid/` | HID abstraction: method-channel backend (macOS), WebHID backend (web) |
+| `lib/hid/` | HID abstraction: method-channel backend (macOS), hidraw backend (Linux), WebHID backend (web) |
 | `lib/protocol/` | Vial/VIA protocol: `Keyboard`, dynamic entries, dummy keyboard |
 | `lib/keycodes/` | Keycode tables (protocol v5/v6), Any-key parser |
 | `lib/keymaps/`, `lib/kle/`, `lib/macro/` | Keymap display overrides, KLE deserializer, macro (de)serialisation |
@@ -86,6 +115,7 @@ report no issues).
 | `lib/ui/dialogs/` | Unlock, Any key, About keyboard, colour and text-box dialogs |
 | `lib/ui/widgets/` | Keyboard renderer, keycode picker, tab strips, buttons |
 | `macos/Runner/HidPlugin.swift` | IOHIDManager bridge |
+| `linux/udev/99-vial.rules` | udev rule granting users access to Vial keyboards |
 
 ## License
 

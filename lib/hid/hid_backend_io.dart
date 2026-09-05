@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 
+import 'hid_backend_linux.dart';
 import 'hid_device.dart';
 
-HidBackend createHidBackend() => ChannelHidBackend();
+HidBackend createHidBackend() =>
+    Platform.isLinux ? LinuxHidrawBackend() : ChannelHidBackend();
 
-/// Desktop backend: IOHIDManager (see macos/Runner/HidPlugin.swift) behind a
+/// macOS backend: IOHIDManager (see macos/Runner/HidPlugin.swift) behind a
 /// method channel.
 class ChannelHidBackend implements HidBackend {
   static const MethodChannel _channel = MethodChannel('vial/hid');

@@ -8,4 +8,6 @@ Future<String> downloadViaStack() async =>
 
 void exitApp() {}
 
+String? dummyJsonFromEnvironment() => null;
+
 Future<String?> readLocalFile(String path) async => null;

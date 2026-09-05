@@ -41,6 +41,10 @@ Future<String> downloadViaStack() async {
 
 void exitApp() => exit(0);
 
+/// Runtime counterpart of the `VIAL_DUMMY_JSON` dart-define, so a prebuilt
+/// binary can still start with a dummy keyboard.
+String? dummyJsonFromEnvironment() => Platform.environment['VIAL_DUMMY_JSON'];
+
 Future<String?> readLocalFile(String path) async {
   final f = File(path);
   return f.existsSync() ? f.readAsString() : null;

@@ -119,11 +119,13 @@ class _MainWindowState extends State<MainWindow> {
     await _loadStartupDummy();
   }
 
-  /// Development aid: `--dart-define=VIAL_DUMMY_JSON=/path/to/via.json` (or
-  /// `?dummy=<same-origin url>` on the web) loads a dummy keyboard without
+  /// Development aid: `--dart-define=VIAL_DUMMY_JSON=/path/to/via.json`, the
+  /// environment variable of the same name on desktop, or
+  /// `?dummy=<same-origin url>` on the web loads a dummy keyboard without
   /// going through the file picker.
   Future<void> _loadStartupDummy() async {
     var path = const String.fromEnvironment('VIAL_DUMMY_JSON');
+    if (path.isEmpty) path = dummyJsonFromEnvironment() ?? '';
     if (path.isEmpty && kIsWeb) {
       path = Uri.base.queryParameters['dummy'] ?? '';
     }

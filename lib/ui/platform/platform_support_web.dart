@@ -10,6 +10,8 @@ Future<String> downloadViaStack() async =>
 
 void exitApp() {}
 
+String? dummyJsonFromEnvironment() => null;
+
 @JS('fetch')
 external JSPromise<_Response> _fetch(JSString url);
 
