@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // ignore_for_file: avoid_print
 // Command-line client for the debug UI probe extensions.
 //

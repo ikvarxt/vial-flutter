@@ -89,4 +89,19 @@ report no issues).
 
 ## License
 
-GPL-2.0-or-later, same as vial-gui.
+vial-flutter is a port of [vial-gui](https://github.com/vial-kb/vial-gui)
+(Copyright Ilya Zhuravlev and contributors) and is therefore distributed under
+the same terms: GNU General Public License, version 2 or (at your option) any
+later version. See [COPYING](COPYING). Every source file carries an
+`SPDX-License-Identifier: GPL-2.0-or-later` header.
+
+The protocol layer, keycode tables and GUI tests were translated from the
+Python sources; `lib/keycodes/keycodes_v*.dart`, `lib/keycodes/keycode_defs.dart`
+and `lib/keymaps/keymap_tables.dart` are generated from them by
+`tool/gen_tables.py`. The Flutter UI, the HID backends and everything else in
+this repository were written for this port.
+
+This is an unofficial port and is not affiliated with the Vial project.
+
+Bundled IBM Plex fonts are licensed under the SIL Open Font License 1.1, see
+[assets/fonts/LICENSE.txt](assets/fonts/LICENSE.txt).

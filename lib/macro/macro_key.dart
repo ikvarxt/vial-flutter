@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import '../keycodes/keycode.dart';
 
 /// Recorded key events, as produced by the macro recorder before

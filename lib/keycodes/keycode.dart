@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'any_keycode.dart';
 import 'keycode_defs.dart';
 import 'keycodes_v5.dart';

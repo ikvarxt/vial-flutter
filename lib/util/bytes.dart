@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'dart:typed_data';
 
 /// Little helper mirroring Python's struct.pack for the fixed layouts the

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'dart:async';
 import 'dart:collection';
 import 'dart:js_interop';

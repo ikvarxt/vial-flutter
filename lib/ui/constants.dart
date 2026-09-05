@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 const double keySizeRatio = 3.2;
 const double keySpacingRatio = 0.2;
 const double keyRoundness = 0.08;

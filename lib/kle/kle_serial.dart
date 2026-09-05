@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Based on https://github.com/ijprest/kle-serial
 // & see https://github.com/ijprest/kle-serial/pull/1
 

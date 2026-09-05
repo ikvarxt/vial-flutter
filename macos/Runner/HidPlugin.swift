@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import Cocoa
 import FlutterMacOS
 import IOKit.hid

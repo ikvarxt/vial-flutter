@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Persistent user preferences (the reference app used QSettings).

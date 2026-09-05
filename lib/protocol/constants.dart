@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 const int cmdViaGetProtocolVersion = 0x01;
 const int cmdViaGetKeyboardValue = 0x02;
 const int cmdViaSetKeyboardValue = 0x03;

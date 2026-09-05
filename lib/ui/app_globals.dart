@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'package:flutter/material.dart';
 
 /// Navigator used by non-widget code (tray targets, unlocker) to show dialogs.

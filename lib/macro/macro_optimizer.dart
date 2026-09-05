@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'macro_key.dart';
 
 /// Removes exact repetition, i.e. two Down or two Up of the same key.

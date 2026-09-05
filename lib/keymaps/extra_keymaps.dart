@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'keymap_tables.dart';
 
 /// Programmer Dvorak legends keyed by the QWERTY position's qmk id.

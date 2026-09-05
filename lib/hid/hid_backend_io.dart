@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'package:flutter/services.dart';
 
 import 'hid_device.dart';

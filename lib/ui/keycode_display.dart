@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'package:flutter/foundation.dart';
 
 import '../keycodes/keycode.dart';

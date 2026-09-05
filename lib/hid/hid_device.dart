@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'dart:typed_data';
 
 import '../util/bytes.dart';

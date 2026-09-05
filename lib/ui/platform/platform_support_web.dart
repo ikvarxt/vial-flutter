@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'dart:js_interop';
 
 Future<String?> loadCachedViaStack() async => null;

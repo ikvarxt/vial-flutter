@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 import 'package:flutter/material.dart';
 
 /// Named corner radii shared by every surface in the app.
