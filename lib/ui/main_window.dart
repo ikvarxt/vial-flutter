@@ -7,7 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../hid/vial_device.dart';
 import '../keycodes/keycode.dart';
-import '../keymaps/keymap_tables.dart';
+import '../keymaps/extra_keymaps.dart';
 import '../protocol/constants.dart';
 import '../protocol/keyboard.dart';
 import 'app_globals.dart';
@@ -98,7 +98,7 @@ class _MainWindowState extends State<MainWindow> {
 
   void _applyKeymapSetting() {
     final name = AppSettings.instance.keymap;
-    for (final (n, table) in keymapTables) {
+    for (final (n, table) in allKeymapTables) {
       if (n == name) {
         KeycodeDisplay.setKeymapOverride(table);
         return;
@@ -410,7 +410,7 @@ class _MainWindowState extends State<MainWindow> {
       PlatformMenu(
         label: 'Keyboard Layout',
         menus: [
-          for (final (name, _) in keymapTables)
+          for (final (name, _) in allKeymapTables)
             PlatformMenuItem(
               label: _check(name == keymap, name),
               onSelected: () => _changeKeyboardLayout(name),
@@ -505,7 +505,7 @@ class _MainWindowState extends State<MainWindow> {
         ),
         SubmenuButton(
           menuChildren: [
-            for (final (name, _) in keymapTables)
+            for (final (name, _) in allKeymapTables)
               MenuItemButton(
                 onPressed: () => _changeKeyboardLayout(name),
                 leadingIcon: _radio(name == keymap),
