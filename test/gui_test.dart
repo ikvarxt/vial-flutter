@@ -12,6 +12,7 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vial_flutter/hid/hid_device.dart';
 import 'package:vial_flutter/hid/vial_device.dart';
+import 'package:vial_flutter/macro/macro_action.dart';
 import 'package:vial_flutter/main.dart';
 import 'package:vial_flutter/settings/qmk_settings.dart';
 import 'package:vial_flutter/ui/app_settings.dart';
@@ -73,11 +74,13 @@ class VirtualKeyboard {
     String kbJson, {
     List<List<int>>? combos,
     List<List<int>>? tapDance,
+    List<int>? macros,
   }) : combos = combos ?? [],
        tapDance = tapDance ?? [],
        definition = Uint8List.fromList(
          XZEncoder().encodeBytes(utf8.encode(kbJson)),
        ) {
+    if (macros != null) macroBuffer.setAll(0, macros);
     for (var l = 0; l < layers; l++) {
       keymap.add([for (var r = 0; r < rows; r++) List.filled(cols, 0)]);
     }
@@ -178,7 +181,7 @@ class VirtualKeyboard {
         final offset = readU16be(msg, 1);
         final size = msg[3];
         return Uint8List.fromList([
-          msg[0],
+          ...msg.sublist(0, 4),
           ...macroBuffer.sublist(offset, offset + size),
         ]);
       case 0x11:
@@ -242,6 +245,7 @@ Future<VirtualKeyboard> prepare(
   WidgetTester tester, {
   List<List<int>>? combos,
   List<List<int>>? tapDance,
+  List<int>? macros,
 }) async {
   SharedPreferences.setMockInitialValues({});
   PathProviderPlatform.instance = _FakePathProvider(
@@ -251,7 +255,12 @@ Future<VirtualKeyboard> prepare(
   ensureKeycodesInitialized();
   await AppSettings.instance.load();
 
-  final vk = VirtualKeyboard(fakeKeyboard, combos: combos, tapDance: tapDance);
+  final vk = VirtualKeyboard(
+    fakeKeyboard,
+    combos: combos,
+    tapDance: tapDance,
+    macros: macros,
+  );
   final ar = Autorefresh.instance;
   await ar.currentDevice?.close();
   ar.currentDevice = null;
@@ -559,6 +568,30 @@ void main() {
     expect(vk.combos[2], [4, 8, 0, 0x207, 5]);
 
     await checkTab(2, ['KC_A', 'KC_E', 'KC_NO', 'LSFT(KC_D)', 'KC_B']);
+  });
+
+  testWidgets('macros with key sequences', (tester) async {
+    // M0 taps A then B, M1 holds LCtrl: the recorder must rebuild these rows
+    // without touching key controllers that are not in place yet.
+    await prepare(
+      tester,
+      macros: [
+        ssQmkPrefix, ssTapCode, 4, ssQmkPrefix, ssTapCode, 5, 0, //
+        ssQmkPrefix, ssDownCode, 0xE0, 0,
+      ],
+    );
+    await switchMainTab(tester, 'Macros');
+
+    var w = keyWidgets(tester);
+    expect(w, hasLength(2));
+    expect(w[0].keycode, 'KC_A');
+    expect(w[1].keycode, 'KC_B');
+
+    await tester.tap(stripLabel('M1'));
+    await tester.pumpAndSettle();
+    w = keyWidgets(tester);
+    expect(w, hasLength(1));
+    expect(w[0].keycode, 'KC_LCTRL');
   });
 
   testWidgets('tap dance', (tester) async {

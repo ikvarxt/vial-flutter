@@ -27,6 +27,7 @@ class _ActionUi {
   final VoidCallback onChanged;
   final List<KeyWidgetController> keys = [];
   KeycodeFilter? _filter;
+  var _rebuilding = false;
 
   String get tag => act.tag;
 
@@ -46,20 +47,28 @@ class _ActionUi {
     keys.clear();
     final a = act;
     if (a is ActionSequence) {
-      for (final kc in a.sequence) {
-        final c = KeyWidgetController(
-          keycodeFilter: _filter,
-          onChanged: _onSequenceChanged,
-        );
-        c.setKeycode(kc);
-        keys.add(c);
+      // setKeycode fires onChanged synchronously, so the controllers must be
+      // in place before the sequence is pushed into them.
+      _rebuilding = true;
+      try {
+        for (final kc in a.sequence) {
+          final c = KeyWidgetController(
+            keycodeFilter: _filter,
+            onChanged: _onSequenceChanged,
+          );
+          keys.add(c);
+          c.setKeycode(kc);
+        }
+      } finally {
+        _rebuilding = false;
       }
     }
   }
 
   void _onSequenceChanged() {
+    if (_rebuilding) return;
     final a = act as ActionSequence;
-    for (var x = 0; x < a.sequence.length; x++) {
+    for (var x = 0; x < a.sequence.length && x < keys.length; x++) {
       final kc = keys[x].keycode;
       if (kc == 'KC_NO') {
         a.sequence.removeAt(x);
