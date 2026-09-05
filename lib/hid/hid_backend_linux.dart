@@ -122,8 +122,17 @@ class LinuxHidrawBackend implements HidBackend {
   @override
   Future<HidDevice> open(HidDeviceInfo info) async {
     final w = await worker;
-    final fd = await w.open(info.path);
-    return _HidrawDevice(info, w, fd);
+    try {
+      final fd = await w.open(info.path);
+      return _HidrawDevice(info, w, fd);
+    } on HidCommunicationError catch (e) {
+      if (!e.message.contains('errno 13')) rethrow;
+      throw HidCommunicationError(
+        '${e.message}: permission denied. Install a udev rule granting your '
+        'user access to ${info.path} (see linux/udev/99-vial.rules) and '
+        're-plug the keyboard.',
+      );
+    }
   }
 
   @override
