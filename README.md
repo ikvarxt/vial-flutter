@@ -61,7 +61,17 @@ sudo cp linux/udev/99-vial.rules /etc/udev/rules.d/
 sudo udevadm control --reload && sudo udevadm trigger
 ```
 
-then re-plug the keyboard.
+then re-plug the keyboard. The rule matches on the Vial serial-number magic, so
+a board still running plain VIA firmware (used through *Sideload VIA JSON* or
+the downloaded definitions) needs its own line keyed by vendor/product id, e.g.
+for a Lily58:
+
+```
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="eb2d", MODE="0660", TAG+="uaccess"
+```
+
+"unable to open the device ... errno 13" means exactly this: the node exists
+but your user may not open it.
 
 The web build needs a user gesture before the browser exposes devices: click
 **Connect device** in the toolbar and pick the keyboard in the browser's

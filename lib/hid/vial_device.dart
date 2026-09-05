@@ -23,15 +23,17 @@ abstract class VialDevice {
   String get title;
 
   Future<void> open([Map<String, dynamic>? overrideJson]) async {
+    Object? lastError;
     for (var x = 0; x < 10; x++) {
       try {
         dev = await backend.open(desc);
         return;
-      } catch (_) {
+      } catch (e) {
+        lastError = e;
         await Future<void>.delayed(const Duration(seconds: 1));
       }
     }
-    throw StateError('unable to open the device');
+    throw StateError('unable to open the device ${desc.path}: $lastError');
   }
 
   Future<void> send(List<int> data) => dev!.write(Uint8List.fromList(data));
