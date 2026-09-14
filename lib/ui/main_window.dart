@@ -241,6 +241,36 @@ class _MainWindowState extends State<MainWindow> {
     await rebuild();
   });
 
+  Future<void> _onLayoutPreview() => _guard(() async {
+    final f = await pickFile(extension: 'vil', dialogTitle: 'Vial layout');
+    if (f == null) return;
+    final uid = Keyboard.parseLayoutUid(f.bytes);
+    final kb = _keyboard;
+    var definition = kb?.definition;
+    if (definition != null &&
+        kb!.keyboardId >= BigInt.zero &&
+        uid != null &&
+        uid != kb.keyboardId) {
+      await showWarning(
+        'This layout was saved from a different keyboard than the one '
+        'selected.\nPick that keyboard\'s definition JSON (vial.json) to '
+        'preview it.',
+      );
+      definition = null;
+    }
+    if (definition == null) {
+      final d = await pickFile(
+        extension: 'json',
+        dialogTitle: 'Keyboard definition JSON',
+      );
+      if (d == null) return;
+      definition = jsonDecode(utf8.decode(d.bytes)) as Map<String, dynamic>;
+    }
+    await autorefresh.loadPreview(
+      VialPreviewKeyboard(f.name, definition, f.bytes),
+    );
+  });
+
   Future<void> _onLayoutSave() => _guard(() async {
     if (_keyboard == null) return;
     await saveFile(
@@ -388,6 +418,10 @@ class _MainWindowState extends State<MainWindow> {
             onSelected: locked ? null : _onLayoutLoad,
           ),
           PlatformMenuItem(
+            label: 'Preview Layout File…',
+            onSelected: locked ? null : _onLayoutPreview,
+          ),
+          PlatformMenuItem(
             label: 'Save Current Layout…',
             shortcut: _shortcut(LogicalKeyboardKey.keyS),
             onSelected: locked ? null : _onLayoutSave,
@@ -475,6 +509,10 @@ class _MainWindowState extends State<MainWindow> {
               onPressed: locked ? null : _onLayoutLoad,
               shortcut: _shortcut(LogicalKeyboardKey.keyO),
               child: const Text('Load saved layout...'),
+            ),
+            MenuItemButton(
+              onPressed: locked ? null : _onLayoutPreview,
+              child: const Text('Preview layout file...'),
             ),
             MenuItemButton(
               onPressed: locked ? null : _onLayoutSave,

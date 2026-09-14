@@ -264,6 +264,7 @@ Future<VirtualKeyboard> prepare(
   final ar = Autorefresh.instance;
   await ar.currentDevice?.close();
   ar.currentDevice = null;
+  ar.previewDevice = null;
   ar.devices = [];
   ar.backend = FakeBackend(vk);
   addTearDown(ar.stop);
@@ -482,6 +483,47 @@ void main() {
     expect((c.scale - initial).abs(), lessThan(0.01));
     await tapButton(tester, '-');
     expect(c.scale, lessThan(initial));
+  });
+
+  testWidgets('preview layout file', (tester) async {
+    final vk = await prepare(tester);
+    const layoutFile =
+        '{"version":1,"uid":42,'
+        '"layout":[[["KC_Q","KC_W"],["KC_E","KC_R"]],'
+        '[["KC_1","KC_2"],["KC_3","KC_4"]]],'
+        '"encoder_layout":[[],[]],"layout_options":-1,"macro":[],'
+        '"tap_dance":[["KC_A","KC_B","KC_NO","KC_NO",150]],'
+        '"combo":[],"key_override":[],"alt_repeat_key":[],"settings":{}}';
+    final dev = VialPreviewKeyboard(
+      'friend.vil',
+      jsonDecode(fakeKeyboard) as Map<String, dynamic>,
+      Uint8List.fromList(utf8.encode(layoutFile)),
+    );
+    await Autorefresh.instance.loadPreview(dev);
+    await tester.pumpAndSettle();
+
+    expect(Autorefresh.instance.currentDevice, same(dev));
+    expect(find.text('[Preview] friend.vil'), findsOneWidget);
+    // The real keyboard stays listed and untouched.
+    expect(Autorefresh.instance.devices, hasLength(2));
+    expect(vk.keymap[0][0][0], 0);
+
+    final c = keymapController(tester);
+    expect(c.widgets[0].text, 'Q');
+    expect(c.widgets[3].text, 'R');
+    // Edits land in memory only; the virtual device never sees them.
+    await tapKey(tester, find.byType(KeyboardWidget).first, c.widgets[0]);
+    await tapButton(tester, 'Z');
+    expect(c.widgets[0].text, 'Z');
+    expect(vk.keymap[0][0][0], 0);
+    await tapButton(tester, '1');
+    expect(c.widgets[0].text, '!\n1');
+
+    await switchMainTab(tester, 'Tap Dance');
+    final w = keyWidgets(tester);
+    expect(w, hasLength(4));
+    expect(w[0].keycode, 'KC_A');
+    expect(w[1].keycode, 'KC_B');
   });
 
   testWidgets('layer switch', (tester) async {

@@ -25,6 +25,10 @@ class Autorefresh {
 
   List<VialDevice> devices = [];
   VialDevice? currentDevice;
+
+  /// Layout file being previewed; listed alongside real devices until
+  /// replaced by the next preview.
+  VialDevice? previewDevice;
   DevicesUpdated? onDevicesUpdated;
 
   Map<String, dynamic>? sideloadJson;
@@ -69,6 +73,7 @@ class Autorefresh {
         return;
       }
       if (_locked) return;
+      if (previewDevice != null) newDevices.add(previewDevice!);
 
       final oldPaths = devices.map((d) => d.desc.path).toSet();
       final newPaths = newDevices.map((d) => d.desc.path).toSet();
@@ -93,6 +98,14 @@ class Autorefresh {
     _sideloadVid = 0;
     _sideloadPid = 0;
     await update(quiet: false);
+  }
+
+  /// Shows [dev] in the device list and selects it, closing whatever was open.
+  Future<void> loadPreview(VialDevice dev) async {
+    await currentDevice?.close();
+    currentDevice = dev;
+    previewDevice = dev;
+    await update(quiet: false, hard: true);
   }
 
   Future<void> sideloadViaJson(String data) async {

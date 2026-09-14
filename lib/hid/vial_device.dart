@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import '../protocol/dummy_keyboard.dart';
 import '../protocol/keyboard.dart';
+import '../protocol/preview_keyboard.dart';
 import 'hid_device.dart';
 
 // For Vial keyboard
@@ -136,6 +137,36 @@ class VialDummyKeyboard extends VialKeyboard {
   static Future<Uint8List> _raiseUsbSend(Uint8List msg, {int retries = 1}) {
     throw StateError('usb_send - should not be called!');
   }
+
+  @override
+  Future<void> close() async {}
+}
+
+/// A saved `.vil` layout shown read-only-to-hardware on top of a keyboard
+/// definition; edits stay in memory and nothing is ever written to a device.
+class VialPreviewKeyboard extends VialKeyboard {
+  VialPreviewKeyboard(this.name, this.definition, this.layoutFile)
+    : super(
+        HidDeviceInfo(path: '/preview/$name', vendorId: 0, productId: 0),
+        const _NoBackend(),
+      );
+
+  final String name;
+  final Map<String, dynamic> definition;
+  final Uint8List layoutFile;
+
+  @override
+  Future<void> open([Map<String, dynamic>? overrideJson]) async {
+    final kb = PreviewKeyboard(
+      layoutFile,
+      usbSend: VialDummyKeyboard._raiseUsbSend,
+    );
+    await kb.loadPreview(definition);
+    keyboard = kb;
+  }
+
+  @override
+  String get title => '[Preview] $name';
 
   @override
   Future<void> close() async {}

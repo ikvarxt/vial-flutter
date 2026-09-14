@@ -15,7 +15,8 @@ as a web app in Chrome (WebHID).
 - Layout editor (KLE layout options), Macros (recorder + text editor),
   Lighting (backlight / RGB / VialRGB), Tap Dance, Combos, Key Overrides,
   Alt Repeat Key, QMK Settings, Matrix tester, firmware flasher UI.
-- Layout save/load, sideloading VIA JSON definitions, dummy keyboards, VIA
+- Layout save/load, read-only preview of a `.vil` file without touching any
+  device, sideloading VIA JSON definitions, dummy keyboards, VIA
   keyboard-stack download, unlock flow, keymap display overrides and theming.
 - Works with a real device or, for development, with a dummy keyboard loaded
   from a VIA/Vial JSON definition (see below).
@@ -94,6 +95,13 @@ VIAL_DUMMY_JSON=$PWD/test/fixtures/dummy_60.json build/linux/x64/debug/bundle/vi
 ```
 
 Alternatively use **File > Load Dummy JSON…** at any time.
+
+**File > Preview Layout File…** opens a saved `.vil` as its own entry in the
+device list ("[Preview] name.vil") without writing anything to a keyboard.
+The layout file has no physical layout of its own, so the definition of the
+currently selected keyboard is borrowed when its UID matches; otherwise you
+are asked for that keyboard's definition JSON (`vial.json`). Edits made to a
+preview stay in memory; the next preview replaces the previous one.
 
 On the web, pass a same-origin URL with the `dummy` query parameter, e.g.
 `http://localhost:8080/?dummy=dummy_60.json` after copying the JSON next to
