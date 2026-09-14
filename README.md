@@ -110,6 +110,17 @@ On the web, pass a same-origin URL with the `dummy` query parameter, e.g.
 `http://localhost:8080/?dummy=dummy_60.json` after copying the JSON next to
 the built `index.html`.
 
+Debug builds register VM-service extensions for driving the desktop app from
+a terminal where no native automation is available: `ext.vial.screenshot`,
+`ext.vial.tap`, `ext.vial.text`, `ext.vial.dump` (the selected keyboard's
+state without macros) and `ext.vial.frames` (gaps between rendered frames,
+for spotting UI stalls). `tool/probe.dart` wraps them:
+
+```bash
+dart run tool/probe.dart <vm-service-url> screenshot out.png
+dart run tool/probe.dart <vm-service-url> raw ext.vial.frames '{"thresholdMs":"100"}'
+```
+
 ## Tests
 
 ```bash

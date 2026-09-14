@@ -5,10 +5,12 @@ import IOKit.hid
 
 /// Bridges IOHIDManager to Dart over the "vial/hid" method channel.
 ///
-/// Everything runs on the main run loop: reads never block, they park a
-/// FlutterResult that is completed by the input-report callback or by a
-/// timeout. This mirrors hidapi's read(timeout_ms) semantics closely enough
-/// for the 32-byte request/response protocol Vial uses.
+/// Reads never block: they park a FlutterResult on the main run loop that is
+/// completed by the input-report callback or by a timeout, mirroring hidapi's
+/// read(timeout_ms). Writes go through a serial background queue because
+/// IOHIDDeviceSetReport is synchronous and, over Bluetooth LE, routinely takes
+/// hundreds of milliseconds; on the main thread that would freeze the UI
+/// (Flutter runs the Dart isolate on the platform thread here).
 final class HidPlugin: NSObject {
   private static let channelName = "vial/hid"
   private static let usagePairsKey = "DeviceUsagePairs"
@@ -28,6 +30,7 @@ final class HidPlugin: NSObject {
   }
 
   private let channel: FlutterMethodChannel
+  private let ioQueue = DispatchQueue(label: "me.ikvarxt.vialFlutter.hid")
   private var opened: [Int: Opened] = [:]
   private var nextHandle = 1
 
@@ -179,7 +182,7 @@ final class HidPlugin: NSObject {
     if !entry.removed {
       IOHIDDeviceUnscheduleFromRunLoop(entry.device, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
       IOHIDDeviceRegisterInputReportCallback(entry.device, &entry.buffer, entry.buffer.count, nil, nil)
-      IOHIDDeviceClose(entry.device, IOOptionBits(kIOHIDOptionsTypeNone))
+      ioQueue.async { IOHIDDeviceClose(entry.device, IOOptionBits(kIOHIDOptionsTypeNone)) }
     }
   }
 
@@ -190,15 +193,19 @@ final class HidPlugin: NSObject {
       result(FlutterError(code: "closed", message: "device is not open", details: nil))
       return
     }
-    // Report ID 0: the report data is sent as-is, hidapi strips the leading
-    // zero byte the same way.
-    let ret = data.withUnsafeBufferPointer { buf in
-      IOHIDDeviceSetReport(entry.device, kIOHIDReportTypeOutput, 0, buf.baseAddress!, buf.count)
-    }
-    if ret == kIOReturnSuccess {
-      result(nil)
-    } else {
-      result(FlutterError(code: "write", message: "IOHIDDeviceSetReport failed: \(ret)", details: nil))
+    ioQueue.async {
+      // Report ID 0: the report data is sent as-is, hidapi strips the leading
+      // zero byte the same way.
+      let ret = data.withUnsafeBufferPointer { buf in
+        IOHIDDeviceSetReport(entry.device, kIOHIDReportTypeOutput, 0, buf.baseAddress!, buf.count)
+      }
+      DispatchQueue.main.async {
+        if ret == kIOReturnSuccess {
+          result(nil)
+        } else {
+          result(FlutterError(code: "write", message: "IOHIDDeviceSetReport failed: \(ret)", details: nil))
+        }
+      }
     }
   }
 
