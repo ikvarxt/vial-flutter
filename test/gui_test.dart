@@ -12,12 +12,15 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vial_flutter/hid/hid_device.dart';
 import 'package:vial_flutter/hid/vial_device.dart';
+import 'package:vial_flutter/keymaps/extra_keymaps.dart';
+import 'package:vial_flutter/keymaps/keymap_tables.dart';
 import 'package:vial_flutter/macro/macro_action.dart';
 import 'package:vial_flutter/main.dart';
 import 'package:vial_flutter/settings/qmk_settings.dart';
 import 'package:vial_flutter/ui/app_settings.dart';
 import 'package:vial_flutter/ui/autorefresh.dart';
 import 'package:vial_flutter/ui/dialogs/about_keyboard_dialog.dart';
+import 'package:vial_flutter/ui/keycode_display.dart';
 import 'package:vial_flutter/ui/main_window.dart';
 import 'package:vial_flutter/ui/widgets/key_widget.dart';
 import 'package:vial_flutter/ui/widgets/keyboard_widget.dart';
@@ -653,6 +656,30 @@ void main() {
     w = keyWidgets(tester);
     expect(w, hasLength(1));
     expect(w[0].keycode, 'KC_LCTRL');
+  });
+
+  testWidgets('macro text follows the display keymap', (tester) async {
+    // send_string types by US QWERTY position, so the stored "jdpps" reads
+    // "hello" on a Programmer Dvorak system; the editor shows and takes the
+    // latter and keeps the firmware form as a hint.
+    await prepare(tester, macros: [...utf8.encode('jdpps'), 0]);
+    KeycodeDisplay.setKeymapOverride(programmerDvorakKeymap);
+    addTearDown(() => KeycodeDisplay.setKeymapOverride(keymapTables[0].$2));
+    await switchMainTab(tester, 'Macros');
+
+    final field = find.byType(TextFormField);
+    expect(field, findsOneWidget);
+    expect(tester.widget<TextFormField>(field).initialValue, 'hello');
+    expect(find.text('Sent as QWERTY: jdpps'), findsOneWidget);
+
+    await tester.enterText(field, 'hi');
+    await tester.pumpAndSettle();
+    expect(find.text('Sent as QWERTY: jg'), findsOneWidget);
+
+    KeycodeDisplay.setKeymapOverride(keymapTables[0].$2);
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextFormField>(field).initialValue, 'jg');
+    expect(find.textContaining('Sent as QWERTY'), findsNothing);
   });
 
   testWidgets('tap dance', (tester) async {

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../keycodes/keycode.dart';
 import '../keymaps/keymap_tables.dart';
+import '../keymaps/macro_text_remap.dart';
 
 /// Per-key legend state shared by the keyboard canvas and its callers.
 class KeyLegend {
@@ -20,6 +21,9 @@ class KeycodeDisplay {
   KeycodeDisplay._();
 
   static Map<String, String> keymapOverride = keymapTables[0].$2;
+
+  /// Macro text translation for the current override.
+  static MacroTextRemap macroText = MacroTextRemap.identity;
 
   static final ChangeNotifier notifier = _Notifier();
 
@@ -56,6 +60,7 @@ class KeycodeDisplay {
 
   static void setKeymapOverride(Map<String, String> override) {
     keymapOverride = override;
+    macroText = MacroTextRemap(override);
     (notifier as _Notifier).fire();
   }
 

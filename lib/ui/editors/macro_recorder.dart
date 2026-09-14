@@ -15,6 +15,7 @@ import '../widgets/spin_box.dart';
 import '../widgets/tab_strip.dart';
 import '../widgets/tabbed_keycodes.dart';
 import 'basic_editor.dart';
+import '../keycode_display.dart';
 import '../theme.dart';
 
 /// One macro action row: UI state for a [BasicAction].
@@ -121,6 +122,10 @@ class _MacroTab {
 }
 
 class MacroRecorder extends BasicEditor {
+  MacroRecorder() {
+    KeycodeDisplay.notifier.addListener(notifyListeners);
+  }
+
   Keyboard? keyboard;
   final List<_MacroTab> _tabs = [];
   int _current = 0;
@@ -128,6 +133,12 @@ class MacroRecorder extends BasicEditor {
 
   @override
   String get label => 'Macros';
+
+  @override
+  void dispose() {
+    KeycodeDisplay.notifier.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   @override
   bool valid() =>
@@ -265,16 +276,24 @@ class MacroRecorder extends BasicEditor {
     final a = line.act;
     Widget body;
     if (a is ActionText) {
+      // The field shows and takes text as the OS types it under the display
+      // keymap; the stored text stays in send_string's QWERTY form.
+      final remap = KeycodeDisplay.macroText;
+      final shown = remap.toDisplay(a.text);
       body = TextFormField(
-        key: ValueKey(line),
-        initialValue: a.text,
-        decoration: const InputDecoration(
+        key: ValueKey((line, KeycodeDisplay.keymapOverride)),
+        initialValue: shown,
+        decoration: InputDecoration(
           isDense: true,
-          border: OutlineInputBorder(),
-          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          border: const OutlineInputBorder(),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
+          ),
+          helperText: shown == a.text ? null : 'Sent as QWERTY: ${a.text}',
         ),
         onChanged: (v) {
-          a.text = v;
+          a.text = remap.toFirmware(v);
           _onChange();
         },
       );
