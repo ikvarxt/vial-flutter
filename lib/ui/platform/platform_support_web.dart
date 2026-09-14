@@ -12,6 +12,8 @@ void exitApp() {}
 
 String? dummyJsonFromEnvironment() => null;
 
+String? previewVilFromEnvironment() => null;
+
 @JS('fetch')
 external JSPromise<_Response> _fetch(JSString url);
 

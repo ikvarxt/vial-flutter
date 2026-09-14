@@ -10,4 +10,6 @@ void exitApp() {}
 
 String? dummyJsonFromEnvironment() => null;
 
+String? previewVilFromEnvironment() => null;
+
 Future<String?> readLocalFile(String path) async => null;

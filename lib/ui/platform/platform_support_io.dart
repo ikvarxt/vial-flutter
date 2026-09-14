@@ -45,6 +45,8 @@ void exitApp() => exit(0);
 /// binary can still start with a dummy keyboard.
 String? dummyJsonFromEnvironment() => Platform.environment['VIAL_DUMMY_JSON'];
 
+String? previewVilFromEnvironment() => Platform.environment['VIAL_PREVIEW_VIL'];
+
 Future<String?> readLocalFile(String path) async {
   final f = File(path);
   return f.existsSync() ? f.readAsString() : null;

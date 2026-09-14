@@ -133,6 +133,27 @@ class _MainWindowState extends State<MainWindow> {
     final data = await readLocalFile(path);
     if (data == null) return;
     await _guard(() => autorefresh.loadDummy(data));
+    await _loadStartupPreview(data);
+  }
+
+  /// Development aid: `VIAL_PREVIEW_VIL=/path/to/layout.vil` (dart-define or
+  /// environment variable) previews that file on the dummy definition.
+  Future<void> _loadStartupPreview(String definition) async {
+    var path = const String.fromEnvironment('VIAL_PREVIEW_VIL');
+    if (path.isEmpty) path = previewVilFromEnvironment() ?? '';
+    if (path.isEmpty) return;
+    final data = await readLocalFile(path);
+    if (data == null) return;
+    final name = path.split(RegExp(r'[/\\]')).last;
+    await _guard(
+      () => autorefresh.loadPreview(
+        VialPreviewKeyboard(
+          name,
+          jsonDecode(definition) as Map<String, dynamic>,
+          Uint8List.fromList(utf8.encode(data)),
+        ),
+      ),
+    );
   }
 
   void _onLockChanged() {

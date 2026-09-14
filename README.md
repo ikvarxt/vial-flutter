@@ -101,7 +101,10 @@ device list ("[Preview] name.vil") without writing anything to a keyboard.
 The layout file has no physical layout of its own, so the definition of the
 currently selected keyboard is borrowed when its UID matches; otherwise you
 are asked for that keyboard's definition JSON (`vial.json`). Edits made to a
-preview stay in memory; the next preview replaces the previous one.
+preview stay in memory; the next preview replaces the previous one. For
+development, `VIAL_PREVIEW_VIL=/path/to/layout.vil` (dart-define or
+environment variable, together with `VIAL_DUMMY_JSON` as the definition)
+opens such a preview at startup.
 
 On the web, pass a same-origin URL with the `dummy` query parameter, e.g.
 `http://localhost:8080/?dummy=dummy_60.json` after copying the JSON next to
