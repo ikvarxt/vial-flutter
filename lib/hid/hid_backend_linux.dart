@@ -52,6 +52,7 @@ class LinuxHidrawBackend implements HidBackend {
     final uevent = _parseUevent(File('$hidDir/uevent').readAsStringSync());
     final hidId = (uevent['HID_ID'] ?? '').split(':');
     if (hidId.length != 3) return const [];
+    final bus = int.parse(hidId[0], radix: 16);
     final vendorId = int.parse(hidId[1], radix: 16);
     final productId = int.parse(hidId[2], radix: 16);
 
@@ -77,9 +78,20 @@ class LinuxHidrawBackend implements HidBackend {
           product: product,
           usagePage: page,
           usage: usage,
+          transport: _busName(bus),
         ),
     ];
   }
+
+  /// BUS_* constants from linux/input.h as they appear in HID_ID.
+  static String _busName(int bus) => switch (bus) {
+    0x03 => 'USB',
+    0x05 => 'Bluetooth',
+    0x06 => 'Virtual',
+    0x18 => 'I2C',
+    0x1C => 'SPI',
+    _ => 'Bus 0x${bus.toRadixString(16).toUpperCase()}',
+  };
 
   static Map<String, String> _parseUevent(String text) {
     final out = <String, String>{};

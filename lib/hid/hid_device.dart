@@ -17,6 +17,7 @@ class HidDeviceInfo {
     this.product = '',
     this.usagePage = 0,
     this.usage = 0,
+    this.transport = '',
   });
 
   final String path;
@@ -27,6 +28,10 @@ class HidDeviceInfo {
   final String product;
   final int usagePage;
   final int usage;
+
+  /// Bus the interface hangs off ("USB", "Bluetooth", "Bluetooth Low
+  /// Energy", ...); empty where the platform does not tell (WebHID).
+  final String transport;
 
   @override
   String toString() =>

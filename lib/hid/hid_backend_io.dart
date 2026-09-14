@@ -38,6 +38,7 @@ class ChannelHidBackend implements HidBackend {
     product: (m['product'] as String?) ?? '',
     usagePage: (m['usagePage'] as int?) ?? 0,
     usage: (m['usage'] as int?) ?? 0,
+    transport: (m['transport'] as String?) ?? '',
   );
 
   @override

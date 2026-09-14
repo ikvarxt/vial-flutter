@@ -46,6 +46,7 @@ const fakeInfo = HidDeviceInfo(
   product: 'Test Keyboard',
   usagePage: 0xFF60,
   usage: 0x61,
+  transport: 'USB',
 );
 
 String _hex(List<int> d) =>
@@ -404,6 +405,7 @@ void main() {
       'VID: DEAD\n'
       'PID: BEEF\n'
       'Device: /magic/path/for/tests\n'
+      'Transport: USB\n'
       '\n'
       'VIA protocol: 9\n'
       'Vial protocol: 6\n'

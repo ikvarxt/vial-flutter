@@ -652,6 +652,7 @@ class _MainWindowState extends State<MainWindow> {
                 ),
               ),
             ),
+            if (selected != null) _TransportBadge(device: selected, palette: p),
             const SizedBox(width: 6),
             Icon(Icons.expand_more, size: 16, color: p.muted),
           ],
@@ -665,7 +666,13 @@ class _MainWindowState extends State<MainWindow> {
             trailingIcon: i == _selectedDevice
                 ? Icon(Icons.check, size: 15, color: p.ink)
                 : const SizedBox(width: 15),
-            child: Text(_devices[i].title),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_devices[i].title),
+                _TransportBadge(device: _devices[i], palette: p),
+              ],
+            ),
           ),
       ],
     );
@@ -883,6 +890,35 @@ class _DeviceDot extends StatelessWidget {
             ? palette.accent
             : palette.muted,
         border: d == null ? Border.all(color: palette.muted, width: 1.5) : null,
+      ),
+    );
+  }
+}
+
+/// Small bus icon (USB / Bluetooth) after a device title, with the full
+/// transport name as tooltip. Nothing is drawn when the platform does not
+/// report a transport.
+class _TransportBadge extends StatelessWidget {
+  const _TransportBadge({required this.device, required this.palette});
+
+  final VialDevice device;
+  final VialPalette palette;
+
+  @override
+  Widget build(BuildContext context) {
+    final transport = device.desc.transport;
+    if (transport.isEmpty) return const SizedBox.shrink();
+    final lower = transport.toLowerCase();
+    final icon = lower.contains('bluetooth')
+        ? Icons.bluetooth
+        : lower.contains('usb')
+        ? Icons.usb
+        : Icons.cable;
+    return Padding(
+      padding: const EdgeInsets.only(left: 6),
+      child: Tooltip(
+        message: transport,
+        child: Icon(icon, size: 14, color: palette.muted),
       ),
     );
   }

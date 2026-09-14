@@ -134,6 +134,7 @@ final class HidPlugin: NSObject {
           "product": strProp(device, kIOHIDProductKey),
           "usagePage": page,
           "usage": usage,
+          "transport": strProp(device, kIOHIDTransportKey),
         ])
       }
     }

@@ -39,6 +39,7 @@ String aboutKeyboardText(VialKeyboard device) {
   b.writeln('VID: ${_hex(desc.vendorId, 4)}');
   b.writeln('PID: ${_hex(desc.productId, 4)}');
   b.writeln('Device: ${desc.path}');
+  if (desc.transport.isNotEmpty) b.writeln('Transport: ${desc.transport}');
   b.writeln();
   if (kb.sideload) {
     b.writeln('Sideloaded JSON, Vial functionality is disabled\n');
