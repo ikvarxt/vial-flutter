@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +41,7 @@ Future<void> main() async {
   };
 
   UiProbe.register();
-  runZonedGuarded(() => runApp(const VialApp()), _reportError);
+  runApp(const VialApp());
 }
 
 class VialApp extends StatelessWidget {
