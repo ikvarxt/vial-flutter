@@ -231,16 +231,19 @@ class MockDevice implements HidDevice {
 }
 
 class FakeBackend extends HidBackend {
-  FakeBackend(this.vk);
+  FakeBackend(this.vk, {this.infos = const [fakeInfo]});
 
   final VirtualKeyboard vk;
 
+  /// Interfaces the bus reports; all of them lead to the same [vk].
+  final List<HidDeviceInfo> infos;
+
   @override
-  Future<List<HidDeviceInfo>> enumerate() async => [fakeInfo];
+  Future<List<HidDeviceInfo>> enumerate() async => infos;
 
   @override
   Future<HidDevice> open(HidDeviceInfo info) async {
-    expect(info.path, fakeInfo.path);
+    expect(infos.map((i) => i.path), contains(info.path));
     return MockDevice(vk);
   }
 }
@@ -250,6 +253,7 @@ Future<VirtualKeyboard> prepare(
   List<List<int>>? combos,
   List<List<int>>? tapDance,
   List<int>? macros,
+  List<HidDeviceInfo> infos = const [fakeInfo],
 }) async {
   SharedPreferences.setMockInitialValues({});
   PathProviderPlatform.instance = _FakePathProvider(
@@ -270,7 +274,7 @@ Future<VirtualKeyboard> prepare(
   ar.currentDevice = null;
   ar.previewDevice = null;
   ar.devices = [];
-  ar.backend = FakeBackend(vk);
+  ar.backend = FakeBackend(vk, infos: infos);
   addTearDown(ar.stop);
   KeycodeTray.instance.close();
 
@@ -658,6 +662,25 @@ void main() {
     expect(w[0].keycode, 'KC_LCTRL');
   });
 
+  testWidgets('prefers USB when a keyboard is also seen over Bluetooth', (
+    tester,
+  ) async {
+    const ble = HidDeviceInfo(
+      path: '/magic/path/over/ble',
+      vendorId: 0xDEAD,
+      productId: 0xBEEF,
+      serialNumber: 'vial:f64c2b3c',
+      manufacturer: 'Vial Testing Ltd',
+      product: 'Test Keyboard',
+      usagePage: 0xFF60,
+      usage: 0x61,
+      transport: 'Bluetooth Low Energy',
+    );
+    await prepare(tester, infos: [ble, fakeInfo]);
+    expect(Autorefresh.instance.devices, hasLength(2));
+    expect(Autorefresh.instance.currentDevice!.desc.path, fakeInfo.path);
+  });
+
   testWidgets('macro text follows the display keymap', (tester) async {
     // send_string types by US QWERTY position, so the stored "jdpps" reads
     // "hello" on a Programmer Dvorak system; the editor shows and takes the
@@ -680,6 +703,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<TextFormField>(field).initialValue, 'jg');
     expect(find.textContaining('Sent as QWERTY'), findsNothing);
+
+    // The raw JSON editor is not translated and says so.
+    await tester.tap(find.text('Open Text Editor...'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('display keymap is not applied'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('"jg"'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('tap dance', (tester) async {

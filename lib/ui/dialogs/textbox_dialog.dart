@@ -8,12 +8,14 @@ import '../file_io.dart';
 import '../theme.dart';
 
 /// Multi-line text editor dialog with copy/paste and Ctrl+O / Ctrl+S
-/// import/export. Returns the text on Apply, null on Cancel.
+/// import/export. Returns the text on Apply, null on Cancel. [note] is shown
+/// above the editor when given.
 Future<String?> showTextboxDialog(
   BuildContext context, {
   String text = '',
   String fileExtension = 'txt',
   String fileType = 'Text file',
+  String? note,
 }) {
   return showDialog<String>(
     context: context,
@@ -21,6 +23,7 @@ Future<String?> showTextboxDialog(
       text: text,
       fileExtension: fileExtension,
       fileType: fileType,
+      note: note,
     ),
   );
 }
@@ -30,11 +33,13 @@ class _TextboxDialog extends StatefulWidget {
     required this.text,
     required this.fileExtension,
     required this.fileType,
+    this.note,
   });
 
   final String text;
   final String fileExtension;
   final String fileType;
+  final String? note;
 
   @override
   State<_TextboxDialog> createState() => _TextboxDialogState();
@@ -131,6 +136,14 @@ class _TextboxDialogState extends State<_TextboxDialog> {
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
+                  if (widget.note != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        widget.note!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                   Expanded(
                     child: TextField(
                       controller: _ctl,

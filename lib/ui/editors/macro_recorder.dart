@@ -224,6 +224,10 @@ class MacroRecorder extends BasicEditor {
       text: macroText,
       fileExtension: 'vim',
       fileType: 'Vial macro',
+      note:
+          'Raw macro as stored on the keyboard. The display keymap is not '
+          'applied here: enter text and keycodes by their US QWERTY (original) '
+          'positions.',
     );
     if (result == null) return;
     if (result.length < 6) result = '[]';
