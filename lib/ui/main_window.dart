@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../hid/hid_device.dart';
 import '../hid/vial_device.dart';
 import '../keycodes/keycode.dart';
 import '../keymaps/extra_keymaps.dart';
@@ -179,7 +180,7 @@ class _MainWindowState extends State<MainWindow> {
   Future<void> _onConnect() => _guard(autorefresh.requestDevices);
 
   void _onDevicesUpdated(List<VialDevice> devices, bool hard) {
-    var idx = devices.isEmpty ? -1 : 0;
+    var idx = _preferredIndex(devices);
     final cur = currentDevice;
     if (cur != null) {
       for (var i = 0; i < devices.length; i++) {
@@ -192,6 +193,28 @@ class _MainWindowState extends State<MainWindow> {
     });
     if (hard) onDeviceSelected(idx);
   }
+
+  /// The first device, unless that same keyboard is also reachable over USB:
+  /// a board paired over Bluetooth and plugged in is listed twice and the
+  /// USB interface answers an order of magnitude faster.
+  static int _preferredIndex(List<VialDevice> devices) {
+    if (devices.isEmpty) return -1;
+    final first = devices[0].desc;
+    if (_isUsb(first)) return 0;
+    for (var i = 1; i < devices.length; i++) {
+      final d = devices[i].desc;
+      if (d.vendorId == first.vendorId &&
+          d.productId == first.productId &&
+          d.product == first.product &&
+          _isUsb(d)) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
+  static bool _isUsb(HidDeviceInfo d) =>
+      d.transport.toLowerCase().contains('usb');
 
   Future<void> onDeviceSelected(int idx) async {
     if (_busy) return;
