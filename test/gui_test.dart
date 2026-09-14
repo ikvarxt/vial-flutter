@@ -2,10 +2,10 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
@@ -394,6 +394,23 @@ void main() {
     expect(Autorefresh.instance.devices, hasLength(1));
     expect(currentKeyboard.title, 'Vial Testing Ltd Test Keyboard');
     expect(find.text('Vial Testing Ltd Test Keyboard'), findsWidgets);
+  });
+
+  testWidgets('matrix tester grabs the keyboard', (tester) async {
+    await prepare(tester);
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyA), isFalse);
+
+    await switchMainTab(tester, 'Matrix tester');
+    await tester.pump();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyA), isTrue);
+    expect(
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyS, platform: 'macos'),
+      isTrue,
+    );
+
+    await switchMainTab(tester, 'Keymap');
+    await tester.pump();
+    expect(await tester.sendKeyEvent(LogicalKeyboardKey.keyA), isFalse);
   });
 
   testWidgets('about keyboard', (tester) async {

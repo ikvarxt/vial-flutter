@@ -22,6 +22,7 @@ class MatrixTest extends BasicEditor {
   late final KeyboardWidgetController kb;
   Keyboard? keyboard;
   Timer? _timer;
+  bool _grabbing = false;
   bool _polling = false;
   bool _unlockVisible = false;
 
@@ -51,15 +52,31 @@ class MatrixTest extends BasicEditor {
 
   @override
   void activate() {
+    // The board under test is also the computer's keyboard: without a grab
+    // every tested key would drive the UI (shortcuts, the focused button).
+    if (!_grabbing) {
+      _grabbing = true;
+      FocusManager.instance.addEarlyKeyEventHandler(_swallowKey);
+    }
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 20), (_) => _poll());
   }
 
   @override
   void deactivate() {
+    if (_grabbing) {
+      _grabbing = false;
+      FocusManager.instance.removeEarlyKeyEventHandler(_swallowKey);
+    }
+    _stopPolling();
+  }
+
+  void _stopPolling() {
     _timer?.cancel();
     _timer = null;
   }
+
+  KeyEventResult _swallowKey(KeyEvent event) => KeyEventResult.handled;
 
   Future<void> _poll() async {
     final k = keyboard;
@@ -97,7 +114,7 @@ class MatrixTest extends BasicEditor {
       }
       kb.refresh();
     } catch (_) {
-      deactivate();
+      _stopPolling();
     } finally {
       _polling = false;
     }
