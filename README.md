@@ -54,6 +54,12 @@ Linux:
 flutter run -d linux
 ```
 
+To install a release build into `/Applications` on macOS:
+
+```bash
+tool/install_macos.sh
+```
+
 Keyboards are found through sysfs/hidraw, the same path vial-gui uses. Without
 a udev rule only root can open the nodes; install the bundled rule once:
 
